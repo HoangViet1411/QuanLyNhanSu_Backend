@@ -1,36 +1,36 @@
-const EmployeeService = require('../services/EmployeeService');
 const EmployeeModel = require('../models/EmployeeModel');
+const EmployeeService = require('../services/EmployeeService');
 const UserModel = require('../models/UserModel');
 
 const createEmployee = async (req, res) => {
     try {
-        const body = req.body;
-        const currentUser = req.user;
+        console.log('Creating employee with data:', req.body);
+        const { 
+            employeeId, fullName, email, phone, 
+            position, department, salary,
+            gender, dateOfBirth, dateOfjoining, avatar, username 
+        } = req.body;
 
-        const requiredFields = [
-            'employeeId', 'fullName', 'email', 'phone',
-            'position', 'department', 'salary',
-            'gender', 'dateOfBirth', 'dateOfjoining', 'avatar'
-        ];
-        const missing = requiredFields.filter(field => !body[field]);
-        if (missing.length > 0) {
-            return res.status(400).json({ message: `Missing fields: ${missing.join(', ')}` });
+        if (!employeeId || !fullName || !email || !phone || 
+            !position || !department || !salary ||
+            !gender || !dateOfBirth || !dateOfjoining || !avatar) {
+            return res.status(400).json({ message: 'Missing required fields' });
         }
 
-        // Kiểm tra employeeId trùng
-        const exists = await EmployeeModel.findOne({ employeeId: body.employeeId });
-        if (exists) {
+        const existEmployee = await EmployeeModel.findOne({ employeeId });
+        if (existEmployee) {
             return res.status(409).json({ message: 'Employee ID already exists' });
         }
 
+        const currentUser = req.user;
         let userIdToAssign;
 
         if (currentUser.role === 'admin') {
-            if (!body.username) {
-                return res.status(400).json({ message: 'Admin must provide username to assign user' });
+            if (!username) {
+                return res.status(400).json({ message: 'Admin must provide username to assign employee' });
             }
 
-            const targetUser = await UserModel.findOne({ username: body.username });
+            const targetUser = await UserModel.findOne({ username });
             if (!targetUser) {
                 return res.status(404).json({ message: 'User not found with provided username' });
             }
@@ -41,7 +41,9 @@ const createEmployee = async (req, res) => {
         }
 
         const result = await EmployeeService.createEmployee({
-            ...body,
+            employeeId, fullName, email, phone,
+            position, department, salary,
+            gender, dateOfBirth, dateOfjoining, avatar,
             userId: userIdToAssign
         });
 
@@ -57,25 +59,26 @@ const createEmployee = async (req, res) => {
 const updateEmployee = async (req, res) => {
     try {
         const id = req.params.id;
-        const user = req.user;
+        const data = req.body;
 
         const employee = await EmployeeModel.findById(id);
         if (!employee) {
             return res.status(404).json({ message: 'Employee not found' });
         }
 
-
-        const result = await EmployeeService.updateEmployee(id, req.body);
+        const result = await EmployeeService.updateEmployee(id, data);
         return res.status(200).json(result);
     } catch (e) {
-        return res.status(500).json({ message: 'Update failed', error: e.message });
+        return res.status(500).json({
+            message: 'Error updating employee',
+            error: e.message
+        });
     }
 };
 
 const deleteEmployee = async (req, res) => {
     try {
         const id = req.params.id;
-        const user = req.user;
 
         const employee = await EmployeeModel.findById(id);
         if (!employee) {
@@ -85,7 +88,10 @@ const deleteEmployee = async (req, res) => {
         const result = await EmployeeService.deleteEmployee(id);
         return res.status(200).json(result);
     } catch (e) {
-        return res.status(500).json({ message: 'Delete failed', error: e.message });
+        return res.status(500).json({
+            message: 'Error deleting employee',
+            error: e.message
+        });
     }
 };
 
@@ -93,14 +99,13 @@ const getAllEmployee = async (req, res) => {
     try {
         const user = req.user;
 
-        if (user.role !== 'admin') {
-            return res.status(403).json({ message: 'Only admin can view all employees' });
-        }
-
         const result = await EmployeeService.getAllEmployee();
-        return res.status(200).json(result);
+        return res.status(200).json({ data: result });
     } catch (e) {
-        return res.status(500).json({ message: 'Get failed', error: e.message });
+        return res.status(500).json({
+            message: 'Error getting employee list',
+            error: e.message
+        });
     }
 };
 
@@ -120,12 +125,12 @@ const getEmployeeDetail = async (req, res) => {
             });
         }
 
-        return res.status(200).json({
-            status: 'success',
-            data: employee
-        });
+        return res.status(200).json({ data: employee });
     } catch (e) {
-        return res.status(500).json({ message: 'Error getting employee detail', error: e.message });
+        return res.status(500).json({
+            message: 'Error getting employee detail',
+            error: e.message
+        });
     }
 };
 
