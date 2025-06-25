@@ -28,6 +28,7 @@ const getUserByUsername = async (username) => {
 };
 
 const comparePassword = async (inputPassword, hashedPassword) => {
+    console.log('Comparing:', inputPassword, 'with', hashedPassword);
     return await bcrypt.compare(inputPassword, hashedPassword);
 };
 

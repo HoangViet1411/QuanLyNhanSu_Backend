@@ -2,19 +2,20 @@ const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 dotenv.config();
 
+// Middleware chỉ cho admin
 const authMiddleware = (req, res, next) => {
-    console.log('checkToken', req.headers.token);
+    const token = req.headers.token;
 
-    if (!req.headers.token || !req.headers.token.startsWith('Bearer ')) {
+    if (!token || !token.startsWith('Bearer ')) {
         return res.status(401).json({
             status: 'ERR',
             message: 'Token not provided or invalid format'
         });
     }
 
-    const token = req.headers.token.split(' ')[1];
+    const accessToken = token.split(' ')[1];
 
-    jwt.verify(token, process.env.JWT_ACCESS_SECRET, function (err, user) {
+    jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET, (err, user) => {
         if (err) {
             return res.status(403).json({
                 status: 'ERR',
@@ -22,32 +23,32 @@ const authMiddleware = (req, res, next) => {
             });
         }
 
-        if (user.role === 'admin') {
-            req.user = user;
-            next();
-        } else {
+        if (user.role !== 'admin') {
             return res.status(403).json({
                 status: 'ERR',
                 message: 'Access denied: Admins only'
             });
         }
+
+        req.user = user;
+        next();
     });
 };
 
+// Middleware cho cả user và admin (không kiểm tra param id)
 const authUserMiddleware = (req, res, next) => {
-    console.log('checkToken', req.headers.token);
+    const token = req.headers.token;
 
-    if (!req.headers.token || !req.headers.token.startsWith('Bearer ')) {
+    if (!token || !token.startsWith('Bearer ')) {
         return res.status(401).json({
             status: 'ERR',
             message: 'Token not provided or invalid format'
         });
     }
 
-    const token = req.headers.token.split(' ')[1];
-    const userId = req.params.id;
+    const accessToken = token.split(' ')[1];
 
-    jwt.verify(token, process.env.JWT_ACCESS_SECRET, function (err, user) {
+    jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET, (err, user) => {
         if (err) {
             return res.status(403).json({
                 status: 'ERR',
@@ -55,16 +56,8 @@ const authUserMiddleware = (req, res, next) => {
             });
         }
 
-        // So sánh đúng ID trong token và param
-        if (user.role === 'admin' || user.id === userId) {
-            req.user = user;
-            next();
-        } else {
-            return res.status(403).json({
-                status: 'ERR',
-                message: 'Access denied: Admins or self only'
-            });
-        }
+        req.user = user; // Gán thông tin user vào req
+        next(); // Cho phép đi tiếp
     });
 };
 
