@@ -56,10 +56,54 @@ const getEmployeeDetail = async (employeeId) => {
     };
 };
 
+const searchEmployees = async (keyword, department) => {
+    let query = {};
+
+    if (keyword) {
+        const regex = new RegExp(keyword, 'i'); // không phân biệt hoa thường
+        query.$or = [
+            { fullName: { $regex: regex } },
+            { email: { $regex: regex } }
+        ];
+    }
+
+    if (department) {
+        query.department = department;
+    }
+
+    const employees = await EmployeeModel.find(query).select('-__v');
+    return {
+        status: 'success',
+        data: employees
+    };
+};
+
+const getStatistics = async () => {
+    const byDepartment = await EmployeeModel.aggregate([
+        { $group: { _id: '$department', count: { $sum: 1 } } }
+    ]);
+
+    const byGender = await EmployeeModel.aggregate([
+        { $group: { _id: '$gender', count: { $sum: 1 } } }
+    ]);
+
+    return {
+        status: 'success',
+        data: {
+            byDepartment,
+            byGender
+        }
+    };
+};
+
+
+
 module.exports = {
     createEmployee,
     updateEmployee,
     deleteEmployee,
     getAllEmployee,
-    getEmployeeDetail
+    getEmployeeDetail,
+    searchEmployees,
+    getStatistics
 };

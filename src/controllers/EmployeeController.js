@@ -134,10 +134,38 @@ const getEmployeeDetail = async (req, res) => {
     }
 };
 
+const searchEmployees = async (req, res) => {
+    try {
+        const { keyword, department } = req.query;
+        const result = await EmployeeService.searchEmployees(keyword, department);
+        return res.status(200).json(result);
+    } catch (e) {
+        return res.status(500).json({
+            message: 'Error searching employees',
+            error: e.message
+        });
+    }
+};
+
+const getStatistics = async (req, res) => {
+    try {
+        const result = await EmployeeService.getStatistics();
+        return res.status(200).json(result);
+    } catch (e) {
+        return res.status(500).json({
+            message: 'Error getting statistics',
+            error: e.message
+        });
+    }
+};
+
+
 module.exports = {
     createEmployee,
     updateEmployee,
     deleteEmployee,
     getAllEmployee,
-    getEmployeeDetail
+    getEmployeeDetail,
+    searchEmployees,
+    getStatistics
 };
