@@ -10,6 +10,8 @@ router.get('/getAllEmployee', authMiddleware, EmployeeController.getAllEmployee)
 router.get('/getEmployeeDetail/:id', authUserMiddleware, EmployeeController.getEmployeeDetail);
 router.get('/search', authMiddleware, EmployeeController.searchEmployees);
 router.get('/statistics', authMiddleware, EmployeeController.getStatistics);
+router.get('/getEmployeeByUser/:userId', authUserMiddleware, EmployeeController.getEmployeeByUserId);
+
 
 
 

@@ -97,10 +97,12 @@ const deleteEmployee = async (req, res) => {
 
 const getAllEmployee = async (req, res) => {
     try {
-        const user = req.user;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
 
-        const result = await EmployeeService.getAllEmployee();
-        return res.status(200).json({ data: result });
+        const result = await EmployeeService.getAllEmployee(page, limit);
+
+        return res.status(200).json(result);
     } catch (e) {
         return res.status(500).json({
             message: 'Error getting employee list',
@@ -108,6 +110,7 @@ const getAllEmployee = async (req, res) => {
         });
     }
 };
+
 
 const getEmployeeDetail = async (req, res) => {
     try {
@@ -159,6 +162,34 @@ const getStatistics = async (req, res) => {
     }
 };
 
+const getEmployeeByUserId = async (req, res) => {
+  try {
+    const user = req.user; 
+    const targetUserId = req.params.userId;
+
+    if (user.role !== 'admin' && user.id !== targetUserId) {
+      return res.status(403).json({
+        message: 'Access denied: You can only view your own info',
+      });
+    }
+
+    const result = await EmployeeService.getEmployeeByUserId(targetUserId);
+    if (result.status === 'ERR') {
+      return res.status(404).json({ message: result.message });
+    }
+
+    return res.status(200).json(result);
+  } catch (e) {
+    return res.status(500).json({
+      message: 'Error getting employee by userId',
+      error: e.message,
+    });
+  }
+};
+
+
+
+
 
 module.exports = {
     createEmployee,
@@ -167,5 +198,6 @@ module.exports = {
     getAllEmployee,
     getEmployeeDetail,
     searchEmployees,
-    getStatistics
+    getStatistics,
+    getEmployeeByUserId
 };

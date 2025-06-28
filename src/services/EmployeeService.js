@@ -36,13 +36,26 @@ const deleteEmployee = async (employeeId) => {
     };
 };
 
-const getAllEmployee = async () => {
-    const employees = await EmployeeModel.find({}).select('-__v');
+const getAllEmployee = async (page = 1, limit = 10) => {
+    const skip = (page - 1) * limit;
+
+    const [employees, total] = await Promise.all([
+        EmployeeModel.find({})
+            .select('-__v')
+            .skip(skip)
+            .limit(limit),
+        EmployeeModel.countDocuments()
+    ]);
+
     return {
         status: 'success',
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
         data: employees
     };
 };
+
 
 const getEmployeeDetail = async (employeeId) => {
     const employee = await EmployeeModel.findById(employeeId);
@@ -60,7 +73,7 @@ const searchEmployees = async (keyword, department) => {
     let query = {};
 
     if (keyword) {
-        const regex = new RegExp(keyword, 'i'); // không phân biệt hoa thường
+        const regex = new RegExp(keyword, 'i'); 
         query.$or = [
             { fullName: { $regex: regex } },
             { email: { $regex: regex } }
@@ -96,6 +109,18 @@ const getStatistics = async () => {
     };
 };
 
+const getEmployeeByUserId = async (userId) => {
+  const employee = await EmployeeModel.findOne({ userId });
+  if (!employee) {
+    return { status: 'ERR', message: 'Employee not found' };
+  }
+
+  return {
+    status: 'success',
+    data: employee
+  };
+};
+
 
 
 module.exports = {
@@ -105,5 +130,6 @@ module.exports = {
     getAllEmployee,
     getEmployeeDetail,
     searchEmployees,
-    getStatistics
+    getStatistics,
+    getEmployeeByUserId
 };
