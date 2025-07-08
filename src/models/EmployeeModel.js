@@ -12,7 +12,8 @@ const EmployeeSchema = new mongoose.Schema({
     dateOfBirth: { type: Date, required: true },
     dateOfjoining: { type: Date, required: true },
     avatar: { type: String, required: true },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    role: {type: String, enum: ['Trưởng phòng', 'Phó phòng', 'Trưởng bộ phận', 'Tổ trưởng', 'Nhân viên'],required: true}
 }, { timestamps: true });
 
 module.exports = mongoose.model('Employee', EmployeeSchema);

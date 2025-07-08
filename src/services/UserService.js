@@ -3,13 +3,13 @@ const bcrypt = require('bcrypt');
 const jwtService = require('./jwtService');
 
 const createUser = async (newUser) => {
-    const { username, password, role, employeeId } = newUser;
+    const { username, password, role } = newUser; // ❌ bỏ employeeId
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const createdUser = await UserModel.create({
         username,
         password: hashedPassword,
-        role,
-        employeeId
+        role
     });
 
     return {
@@ -18,6 +18,7 @@ const createUser = async (newUser) => {
         data: createdUser
     };
 };
+
 
 const getUserByEmployeeId = async (employeeId) => {
     return await UserModel.findOne({ employeeId });

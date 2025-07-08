@@ -2,11 +2,12 @@ const express = require('express');
 const router = express.Router();
 const { authMiddleware, authUserMiddleware } = require('../middleware/authMiddelware');
 const EmployeeController = require('../controllers/EmployeeController');
+const upload = require('../middleware/uploadMiddleware');
 
-router.post('/create-employee', authMiddleware, EmployeeController.createEmployee);
-router.put('/update-employee/:id', authMiddleware, EmployeeController.updateEmployee);
+router.post('/create-employee', authMiddleware, upload.single('avatar'), EmployeeController.createEmployee);
+router.put('/update-employee/:id', authMiddleware, upload.single('avatar'), EmployeeController.updateEmployee);
 router.delete('/delete-employee/:id', authMiddleware, EmployeeController.deleteEmployee);
-router.get('/getAllEmployee', authMiddleware, EmployeeController.getAllEmployee);
+router.get('/getAllEmployee', EmployeeController.getAllEmployee);
 router.get('/getEmployeeDetail/:id', authUserMiddleware, EmployeeController.getEmployeeDetail);
 router.get('/search', authMiddleware, EmployeeController.searchEmployees);
 router.get('/statistics', authMiddleware, EmployeeController.getStatistics);

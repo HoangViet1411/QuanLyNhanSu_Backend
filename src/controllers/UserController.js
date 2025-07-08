@@ -1,13 +1,14 @@
 const User = require('../models/UserModel');
 const UserService = require('../services/UserService');
 const jwtService = require('../services/jwtService');
+const bcrypt = require('bcrypt');
 
 const createUser = async (req, res) => {
     try {
         console.log('Creating user with data:', req.body);
-        const { username, password, role, employeeId, confirmPassword } = req.body;
+        const { username, password, role, confirmPassword } = req.body; 
 
-        if (!username || !password || !role || !employeeId || !confirmPassword) {
+        if (!username || !password || !role || !confirmPassword) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
 
@@ -15,11 +16,12 @@ const createUser = async (req, res) => {
             return res.status(400).json({ message: 'Password and confirm password do not match' });
         }
 
-        const existingUser = await UserService.getUserByEmployeeId(employeeId);
+        // ✅ Kiểm tra trùng username nếu cần
+        const existingUser = await UserService.getUserByUsername(username);
         if (existingUser) {
             return res.status(409).json({
                 status: 'error',
-                message: 'User with this employeeId already exists'
+                message: 'Username already exists'
             });
         }
 
@@ -32,6 +34,7 @@ const createUser = async (req, res) => {
         });
     }
 };
+
 
 const loginUser = async (req, res) => {
     try {
@@ -52,26 +55,40 @@ const loginUser = async (req, res) => {
     }
 };
 
-const updateUser = async (req, res) => {
-    try {
-        const userId = req.params.id;
-        const data = req.body;
-        if (!userId) {
-            return res.status(400).json({ status: 'ERR' , message: 'User ID is required' });
-        }
-        console.log("userId", userId);
-        const result = await UserService.updateUser(userId, data);
-        return res.status(200).json({
-            data: result
-        });
 
-    } catch (e) {
-        return res.status(500).json({
-            message: 'Error updating user',
-            error: e.message
-        });
+const updateUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const data = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ status: 'ERR', message: 'User ID is required' });
     }
+
+    // Nếu có đổi mật khẩu thì cần xác nhận và mã hóa
+    if (data.password) {
+      if (!data.confirmPassword || data.password !== data.confirmPassword) {
+        return res.status(400).json({ status: 'ERR', message: 'Mật khẩu xác nhận không khớp' });
+      }
+
+      const hashedPassword = await bcrypt.hash(data.password, 10);
+      data.password = hashedPassword;
+
+      // Xoá confirmPassword khỏi data nếu không cần lưu
+      delete data.confirmPassword;
+    }
+
+    const result = await UserService.updateUser(userId, data);
+
+    return res.status(200).json({ data: result });
+  } catch (e) {
+    return res.status(500).json({
+      message: 'Error updating user',
+      error: e.message
+    });
+  }
 };
+
 
 const deleteUser = async (req, res) => {
     try {
@@ -94,18 +111,15 @@ const deleteUser = async (req, res) => {
 };
 
 const getAllUser = async (req, res) => {
-    try {
-        const result = await UserService.getAllUser();
-        return res.status(200).json({
-            data: result
-        });
-
-    } catch (e) {
-        return res.status(500).json({
-            message: 'Error getiing user data',
-            error: e.message
-        });
-    }
+  try {
+    const result = await UserService.getAllUser();
+    return res.status(200).json(result);  
+  } catch (e) {
+    return res.status(500).json({
+      message: 'Error getting user data',
+      error: e.message
+    });
+  }
 };
 
 const getUserDetail = async (req, res) => {

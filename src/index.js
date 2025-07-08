@@ -3,6 +3,8 @@ const dotenv = require('dotenv');
 const { default: mongoose } = require('mongoose');
 const routes = require('./routes');
 const bodyParser = require('body-parser');
+const path = require('path');
+
 
 dotenv.config();
 
@@ -10,6 +12,7 @@ const app = express();
 const port = process.env.PORT || 3001;
 
 app.use(bodyParser.json());
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 routes(app);
 
 
