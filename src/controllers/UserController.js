@@ -16,7 +16,7 @@ const createUser = async (req, res) => {
             return res.status(400).json({ message: 'Password and confirm password do not match' });
         }
 
-        // ✅ Kiểm tra trùng username nếu cần
+        //  Kiểm tra trùng username nếu cần
         const existingUser = await UserService.getUserByUsername(username);
         if (existingUser) {
             return res.status(409).json({

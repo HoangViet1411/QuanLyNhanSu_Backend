@@ -4,13 +4,13 @@ const { authMiddleware, authUserMiddleware } = require('../middleware/authMiddel
 const EmployeeController = require('../controllers/EmployeeController');
 const upload = require('../middleware/uploadMiddleware');
 
-router.post('/create-employee', authMiddleware, upload.single('avatar'), EmployeeController.createEmployee);
-router.put('/update-employee/:id', authMiddleware, upload.single('avatar'), EmployeeController.updateEmployee);
+router.post('/create-employee', upload.single('avatar'), EmployeeController.createEmployee);
+router.put('/update-employee/:id', upload.single('avatar'), EmployeeController.updateEmployee);
 router.delete('/delete-employee/:id', authMiddleware, EmployeeController.deleteEmployee);
 router.get('/getAllEmployee', EmployeeController.getAllEmployee);
-router.get('/getEmployeeDetail/:id', authUserMiddleware, EmployeeController.getEmployeeDetail);
+router.get('/getEmployeeDetail/:id', EmployeeController.getEmployeeDetail);
 router.get('/search', authMiddleware, EmployeeController.searchEmployees);
-router.get('/statistics', authMiddleware, EmployeeController.getStatistics);
+router.get('/statistics', EmployeeController.getStatistics);
 router.get('/getEmployeeByUser/:userId', authUserMiddleware, EmployeeController.getEmployeeByUserId);
 
 

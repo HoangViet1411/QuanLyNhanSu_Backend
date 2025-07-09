@@ -26,6 +26,24 @@ const createEmployee = async (req, res) => {
       gender, dateOfBirth, dateOfjoining, username, role
     } = req.body;
 
+    // Kiểm tra người gửi request
+    const currentUser = getUserFromToken(req);
+
+    if (!currentUser) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    let userRole = currentUser.role;
+
+    // Nếu không phải admin → kiểm tra xem có phải trưởng phòng không
+    if (userRole !== 'admin') {
+      const currentEmployee = await EmployeeModel.findOne({ userId: currentUser.id });
+      if (!currentEmployee || currentEmployee.role !== 'Trưởng phòng') {
+        return res.status(403).json({ message: 'Chỉ trưởng phòng hoặc admin mới được tạo nhân viên' });
+      }
+    }
+
+    // Kiểm tra các trường bắt buộc
     if (
       !employeeId || !fullName || !email || !phone || !position ||
       !department || !salary || !gender || !dateOfBirth || !dateOfjoining || !req.file || !role
@@ -33,32 +51,26 @@ const createEmployee = async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
+    // Kiểm tra role hợp lệ
     const allowedRoles = ['Trưởng phòng', 'Phó phòng', 'Trưởng bộ phận', 'Tổ trưởng', 'Nhân viên'];
-    if (!allowedRoles.includes(role)) {
+    if (!allowedRoles.includes(role.trim())) {
       return res.status(400).json({ message: 'Invalid role' });
     }
 
+    // Kiểm tra trùng employeeId
     const existEmployee = await EmployeeModel.findOne({ employeeId });
     if (existEmployee) {
       return res.status(409).json({ message: 'Employee ID already exists' });
     }
 
-    const currentUser = req.user;
-    let userIdToAssign;
-
-    if (currentUser.role === 'admin') {
-      if (!username) {
-        return res.status(400).json({ message: 'Admin must provide username to assign employee' });
-      }
-
-      const targetUser = await UserModel.findOne({ username });
-      if (!targetUser) {
+    // Gán userId nếu có username
+    let userIdToAssign = null;
+    if (username) {
+      const user = await UserModel.findOne({ username });
+      if (!user) {
         return res.status(404).json({ message: 'User not found with provided username' });
       }
-
-      userIdToAssign = targetUser._id;
-    } else {
-      userIdToAssign = currentUser.id;
+      userIdToAssign = user._id;
     }
 
     const avatarPath = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
@@ -81,29 +93,60 @@ const createEmployee = async (req, res) => {
   }
 };
 
+
 const updateEmployee = async (req, res) => {
   try {
     const id = req.params.id;
     const data = req.body;
 
+    //  Lấy user từ token
+    const currentUser = getUserFromToken(req);
+    if (!currentUser) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    //  Chỉ admin hoặc trưởng phòng mới được update
+    if (currentUser.role !== 'admin') {
+      const currentEmployee = await EmployeeModel.findOne({ userId: currentUser.id });
+      if (!currentEmployee || currentEmployee.role !== 'Trưởng phòng') {
+        return res.status(403).json({ message: 'Bạn không có quyền cập nhật nhân viên' });
+      }
+    }
+
+    //  Kiểm tra employee tồn tại
     const employee = await EmployeeModel.findById(id);
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
 
+    //  Nếu có avatar mới
     if (req.file) {
       data.avatar = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
     }
 
+    //  Nếu có cập nhật role
     if (data.role) {
       const allowedRoles = ['Trưởng phòng', 'Phó phòng', 'Trưởng bộ phận', 'Tổ trưởng', 'Nhân viên'];
-      if (!allowedRoles.includes(data.role)) {
+      if (!allowedRoles.includes(data.role.trim())) {
         return res.status(400).json({ message: 'Invalid role' });
       }
     }
 
+    // Gán userId nếu có truyền username
+    let userIdToAssign = employee.userId; // giữ nguyên nếu không đổi
+    if (data.username) {
+      const user = await UserModel.findOne({ username: data.username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found with provided username' });
+    }
+    data.userId = user._id;
+    }
+
+
+    //  Cập nhật
     const result = await EmployeeService.updateEmployee(id, data);
     return res.status(200).json(result);
+
   } catch (e) {
     return res.status(500).json({
       message: 'Error updating employee',
@@ -111,6 +154,7 @@ const updateEmployee = async (req, res) => {
     });
   }
 };
+
 
 const deleteEmployee = async (req, res) => {
   try {
@@ -196,28 +240,28 @@ const getEmployeeDetail = async (req, res) => {
     const target = await EmployeeModel.findById(targetId);
     if (!target) return res.status(404).json({ message: 'Employee not found' });
 
-    // ✅ Nếu là admin → xem full
+    //  Nếu là admin → xem full
     if (user.role === 'admin') {
       return res.status(200).json({ data: target });
     }
 
-    // ✅ Nếu xem chính mình → cho xem full
+    //  Nếu xem chính mình → cho xem full
     if (viewer && viewer._id.toString() === target._id.toString()) {
       return res.status(200).json({ data: target });
     }
 
-    // ❌ Cấm xem khác phòng ban
+    //  Cấm xem khác phòng ban
     if (!viewer || viewer.department !== target.department) {
       return res.status(403).json({ message: 'Bạn không có quyền xem nhân viên phòng ban khác' });
     }
 
-    // ✅ Phân quyền theo cấp bậc
+    //  Phân quyền theo cấp bậc
     const hierarchy = ['Trưởng phòng', 'Phó phòng', 'Trưởng bộ phận', 'Tổ trưởng', 'Nhân viên'];
     const viewerIndex = hierarchy.indexOf(viewer.role);
     const targetIndex = hierarchy.indexOf(target.role);
 
     // Nếu cấp dưới → được xem (ẩn lương nếu không phải admin/trưởng phòng)
-    if (targetIndex > viewerIndex) {
+    if (targetIndex >= viewerIndex) {
       if (viewer.role === 'Trưởng phòng') {
         return res.status(200).json({ data: target });
       } else {
@@ -226,7 +270,7 @@ const getEmployeeDetail = async (req, res) => {
       }
     }
 
-    // ❌ Không xem được người cùng cấp hoặc cao hơn
+    //  Không xem được người cùng cấp hoặc cao hơn
     return res.status(403).json({ message: 'Bạn không có quyền xem thông tin này' });
 
   } catch (e) {
