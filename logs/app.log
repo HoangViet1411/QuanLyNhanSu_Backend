@@ -1,0 +1,109 @@
+2025-07-31T13:05:57.484Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T13:05:58.329Z [INFO]: Connected to MongoDB
+2025-07-31T13:06:36.565Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T13:06:37.495Z [INFO]: Connected to MongoDB
+2025-07-31T13:06:47.860Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T13:06:48.650Z [INFO]: Connected to MongoDB
+2025-07-31T13:07:59.942Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T13:08:00.771Z [INFO]: Connected to MongoDB
+2025-07-31T13:46:48.169Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T13:46:49.107Z [INFO]: Connected to MongoDB
+2025-07-31T13:54:25.390Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T13:54:26.308Z [INFO]: Connected to MongoDB
+2025-07-31T13:55:33.308Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T13:55:34.174Z [INFO]: Connected to MongoDB
+2025-07-31T13:57:24.375Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T13:57:25.196Z [INFO]: Connected to MongoDB
+2025-07-31T14:01:53.657Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T14:01:54.514Z [INFO]: Connected to MongoDB
+2025-07-31T14:01:58.194Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T14:01:59.029Z [INFO]: Connected to MongoDB
+2025-07-31T14:02:57.625Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T14:02:58.431Z [INFO]: Connected to MongoDB
+2025-07-31T14:05:26.270Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T14:05:27.133Z [INFO]: Connected to MongoDB
+2025-07-31T14:05:53.285Z [INFO]: Logging in with data: {"username":"admin","password":"12"}
+2025-07-31T14:05:53.451Z [ERROR]: Login failed: Incorrect password
+2025-07-31T14:06:00.587Z [INFO]: Logging in with data: {"username":"admin","password":"123"}
+2025-07-31T14:06:03.672Z [INFO]: admin retrieved employee info by userId
+2025-07-31T14:06:03.833Z [INFO]: admin retrieved employee list
+2025-07-31T14:06:16.329Z [INFO]: admin viewed employee 685b7770f620d419e2cedc93 (admin)
+2025-07-31T14:06:20.923Z [INFO]: admin retrieved employee info by userId
+2025-07-31T14:06:21.363Z [INFO]: admin retrieved employee list
+2025-07-31T14:07:14.062Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T14:07:14.841Z [INFO]: Connected to MongoDB
+2025-07-31T14:08:04.161Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T14:08:05.021Z [INFO]: Connected to MongoDB
+2025-07-31T14:08:12.153Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T14:08:12.915Z [INFO]: Connected to MongoDB
+2025-07-31T14:08:14.667Z [INFO]: User authenticated: admin, Role: admin
+2025-07-31T14:08:14.738Z [INFO]: admin retrieved employee info by userId
+2025-07-31T14:08:15.024Z [INFO]: admin viewed employee 685b7770f620d419e2cedc93 (admin)
+2025-07-31T14:08:17.379Z [INFO]: admin viewed employee 685b7770f620d419e2cedc93 (admin)
+2025-07-31T14:08:22.521Z [INFO]: admin updated employee 685b7770f620d419e2cedc93
+2025-07-31T14:08:25.560Z [INFO]: User authenticated: admin, Role: admin
+2025-07-31T14:08:25.620Z [INFO]: admin retrieved employee info by userId
+2025-07-31T14:08:26.055Z [INFO]: admin retrieved employee list
+2025-07-31T14:08:28.124Z [INFO]: User authenticated: admin, Role: admin
+2025-07-31T14:08:28.175Z [INFO]: admin retrieved employee info by userId
+2025-07-31T14:08:28.617Z [INFO]: admin viewed employee 685b7770f620d419e2cedc93 (admin)
+2025-07-31T14:08:30.172Z [INFO]: User authenticated: admin, Role: admin
+2025-07-31T14:08:30.230Z [INFO]: admin retrieved employee info by userId
+2025-07-31T14:08:30.669Z [INFO]: admin retrieved employee list
+2025-07-31T14:10:43.537Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T14:10:44.271Z [INFO]: Connected to MongoDB
+2025-07-31T14:10:58.581Z [INFO]: admin viewed employee 685b7770f620d419e2cedc93 (admin)
+2025-07-31T14:11:25.683Z [INFO]: Employee updated: 685b7770f620d419e2cedc93
+2025-07-31T14:11:25.683Z [INFO]: admin updated employee 685b7770f620d419e2cedc93
+2025-07-31T14:11:27.973Z [INFO]: User authenticated: admin, Role: admin
+2025-07-31T14:11:28.032Z [INFO]: admin retrieved employee info by userId
+2025-07-31T14:11:28.361Z [INFO]: admin retrieved employee list
+2025-07-31T14:13:18.108Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T14:13:18.983Z [INFO]: Connected to MongoDB
+2025-07-31T14:18:07.675Z [INFO]: Logging in with data: {"username":"admin","password":"12345"}
+2025-07-31T14:18:07.813Z [ERROR]: Login failed:
+2025-07-31T14:18:07.813Z [ERROR]: Login failed: Incorrect password
+2025-07-31T14:18:19.607Z [INFO]: Logging in with data: {"username":"admin","password":"123"}
+2025-07-31T14:18:19.733Z [INFO]: User login successful: admin
+2025-07-31T14:18:21.469Z [INFO]: User authenticated: admin, Role: admin
+2025-07-31T14:18:21.520Z [INFO]: admin retrieved employee info by userId
+2025-07-31T14:18:21.673Z [INFO]: admin retrieved employee list
+2025-07-31T14:18:27.477Z [INFO]: User authenticated: admin, Role: admin
+2025-07-31T14:18:27.529Z [INFO]: admin retrieved employee info by userId
+2025-07-31T14:18:27.747Z [INFO]: Admin authenticated: admin
+2025-07-31T14:18:31.163Z [INFO]: User authenticated: admin, Role: admin
+2025-07-31T14:18:31.220Z [INFO]: admin retrieved employee info by userId
+2025-07-31T14:18:31.672Z [INFO]: admin retrieved employee list
+2025-07-31T14:18:35.216Z [INFO]: admin viewed employee 685b7770f620d419e2cedc93 (admin)
+2025-07-31T14:18:37.788Z [INFO]: User authenticated: admin, Role: admin
+2025-07-31T14:18:37.838Z [INFO]: admin retrieved employee info by userId
+2025-07-31T14:18:38.166Z [INFO]: admin retrieved employee list
+2025-07-31T14:18:38.959Z [INFO]: User authenticated: admin, Role: admin
+2025-07-31T14:18:39.012Z [INFO]: admin retrieved employee info by userId
+2025-07-31T14:18:39.536Z [INFO]: Statistics retrieved
+2025-07-31T14:18:40.558Z [INFO]: User authenticated: admin, Role: admin
+2025-07-31T14:18:40.608Z [INFO]: admin retrieved employee info by userId
+2025-07-31T14:18:40.927Z [INFO]: Admin authenticated: admin
+2025-07-31T14:18:42.159Z [INFO]: User authenticated: admin, Role: admin
+2025-07-31T14:18:42.160Z [INFO]: Getting user detail for ID: 6859538a39874992060c43d8
+2025-07-31T14:19:08.861Z [INFO]: User authenticated: admin, Role: admin
+2025-07-31T14:19:08.912Z [INFO]: admin retrieved employee info by userId
+2025-07-31T14:19:09.121Z [INFO]: Admin authenticated: admin
+2025-07-31T14:19:59.519Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T14:20:00.236Z [ERROR]: Error connecting to MongoDB: MongoServerError: bad auth : authentication failed
+2025-07-31T14:20:16.761Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T14:20:17.609Z [ERROR]: Error connecting to MongoDB: MongoServerError: bad auth : authentication failed
+2025-07-31T14:20:38.465Z [INFO]: Server is running on http://localhost:3001
+2025-07-31T14:20:39.212Z [INFO]: Connected to MongoDB
+2025-08-01T02:13:11.767Z [INFO]: Server is running on http://localhost:3001
+2025-08-01T02:13:13.399Z [INFO]: Connected to MongoDB
+2025-08-01T02:15:29.499Z [INFO]: Logging in with data: {"username":"admin","password":"1"}
+2025-08-01T02:15:29.789Z [ERROR]: Login failed:
+2025-08-01T02:15:29.790Z [ERROR]: Login failed: Incorrect password
+2025-08-01T02:15:47.056Z [INFO]: Logging in with data: {"username":"admin","password":"123"}
+2025-08-01T02:15:47.312Z [INFO]: User login successful: admin
+2025-08-01T02:15:49.277Z [INFO]: User authenticated: admin, Role: admin
+2025-08-01T02:15:49.410Z [INFO]: admin retrieved employee info by userId
+2025-08-01T02:15:49.666Z [INFO]: admin retrieved employee list
+2025-08-01T02:38:42.497Z [INFO]: Server is running on http://localhost:3001
+2025-08-01T02:38:43.972Z [INFO]: Connected to MongoDB

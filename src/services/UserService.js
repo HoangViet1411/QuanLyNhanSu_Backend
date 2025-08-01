@@ -1,39 +1,60 @@
 const UserModel = require('../models/UserModel');
 const bcrypt = require('bcrypt');
 const jwtService = require('./jwtService');
+const { logger } = require('../logger');
 
 const createUser = async (newUser) => {
-    const { username, password, role } = newUser; 
+  try {
+    const { username, password, role } = newUser;
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const createdUser = await UserModel.create({
-        username,
-        password: hashedPassword,
-        role
+      username,
+      password: hashedPassword,
+      role
     });
 
+    logger.info(`User created: ${createdUser._id}`);
     return {
-        status: 'success',
-        message: 'User created successfully',
-        data: createdUser
+      status: 'success',
+      message: 'User created successfully',
+      data: createdUser
     };
+  } catch (error) {
+    logger.error('Error creating user:', error);
+    throw error;
+  }
 };
 
-
 const getUserByEmployeeId = async (employeeId) => {
+  try {
     return await UserModel.findOne({ employeeId });
+  } catch (error) {
+    logger.error('Error finding user by employeeId:', error);
+    throw error;
+  }
 };
 
 const getUserByUsername = async (username) => {
+  try {
     return await UserModel.findOne({ username });
+  } catch (error) {
+    logger.error('Error finding user by username:', error);
+    throw error;
+  }
 };
 
 const comparePassword = async (inputPassword, hashedPassword) => {
-    console.log('Comparing:', inputPassword, 'with', hashedPassword);
+  try {
     return await bcrypt.compare(inputPassword, hashedPassword);
+  } catch (error) {
+    logger.error('Error comparing passwords:', error);
+    throw error;
+  }
 };
 
 const loginUserWithToken = async (username, password) => {
+  try {
     const user = await getUserByUsername(username);
     if (!user) throw new Error('User not found');
 
@@ -41,9 +62,9 @@ const loginUserWithToken = async (username, password) => {
     if (!isMatch) throw new Error('Incorrect password');
 
     const payload = {
-        id: user._id,
-        username: user.username,
-        role: user.role
+      id: user._id,
+      username: user.username,
+      role: user.role
     };
 
     const access_token = jwtService.generateAccessToken(payload);
@@ -51,112 +72,106 @@ const loginUserWithToken = async (username, password) => {
 
     const { password: _, ...userSafe } = user.toObject();
 
+    logger.info(`User login successful: ${user.username}`);
     return {
-        status: 'success',
-        message: 'Login successful',
-        access_token,
-        refresh_token,
-        user: userSafe
+      status: 'success',
+      message: 'Login successful',
+      access_token,
+      refresh_token,
+      user: userSafe
     };
+  } catch (error) {
+    logger.error('Login failed:', error.message);
+    throw error;
+  }
 };
 
 const updateUser = async (userId, data) => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const checkUser = await UserModel.findOne({ _id: userId });
-            if (!checkUser) {
-                return resolve({
-                    status: 'ERR',
-                    message: 'User not found'
-                });
-            }
+  try {
+    const existingUser = await UserModel.findById(userId);
+    if (!existingUser) {
+      return {
+        status: 'ERR',
+        message: 'User not found'
+      };
+    }
 
-            const updateUser = await UserModel.findByIdAndUpdate(userId, data, {new: true});
-            console.log("updateUser", updateUser);
-
-
-            resolve({
-                status: 'success',
-                message: 'User updated successfully',
-                data: updateUser
-            });
-        } catch (error) {
-            reject(error);
-        }
-    });
+    const updatedUser = await UserModel.findByIdAndUpdate(userId, data, { new: true });
+    logger.info(`User updated: ${userId}`);
+    return {
+      status: 'success',
+      message: 'User updated successfully',
+      data: updatedUser
+    };
+  } catch (error) {
+    logger.error('Error updating user:', error);
+    throw error;
+  }
 };
 
 const deleteUser = async (userId) => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const checkUser = await UserModel.findOne({ _id: userId });
-            if (!checkUser) {
-                return resolve({
-                    status: 'ERR',
-                    message: 'User not found'
-                });
-            }
+  try {
+    const existingUser = await UserModel.findById(userId);
+    if (!existingUser) {
+      return {
+        status: 'ERR',
+        message: 'User not found'
+      };
+    }
 
-            await UserModel.findByIdAndDelete(userId);
-
-
-            resolve({
-                status: 'success',
-                message: 'User deleted successfully',
-            });
-        } catch (error) {
-            reject(error);
-        }
-    });
+    await UserModel.findByIdAndDelete(userId);
+    logger.info(`User deleted: ${userId}`);
+    return {
+      status: 'success',
+      message: 'User deleted successfully'
+    };
+  } catch (error) {
+    logger.error('Error deleting user:', error);
+    throw error;
+  }
 };
 
 const getAllUser = async () => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const allUser = await UserModel.find({});
-             resolve({
-                status: 'success',
-                data: allUser
-            });
-            
-            } catch (error) {
-            reject(error);
-            }
-    });
+  try {
+    const allUsers = await UserModel.find({});
+    return {
+      status: 'success',
+      data: allUsers
+    };
+  } catch (error) {
+    logger.error('Error retrieving all users:', error);
+    throw error;
+  }
 };
 
 const getUserDetail = async (userId) => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const user = await UserModel.findOne({ _id: userId });
-            if (!user) {
-                return resolve({
-                    status: 'ERR',
-                    message: 'User not found'
-                });
-            }
+  try {
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return {
+        status: 'ERR',
+        message: 'User not found'
+      };
+    }
 
-
-            resolve({
-                status: 'success',
-                data: user
-            });
-        } catch (error) {
-            reject(error);
-        }
-    });
+    return {
+      status: 'success',
+      data: user
+    };
+  } catch (error) {
+    logger.error('Error retrieving user detail:', error);
+    throw error;
+  }
 };
 
-
-
 module.exports = {
-    createUser,
-    getUserByEmployeeId,
-    getUserByUsername,
-    comparePassword,
-    loginUserWithToken,
-    updateUser,
-    deleteUser,
-    getAllUser,
-    getUserDetail
+  createUser,
+  getUserByEmployeeId,
+  getUserByUsername,
+  comparePassword,
+  loginUserWithToken,
+  updateUser,
+  deleteUser,
+  getAllUser,
+  getUserDetail
 };

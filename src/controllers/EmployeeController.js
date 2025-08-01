@@ -2,8 +2,9 @@ const EmployeeModel = require('../models/EmployeeModel');
 const EmployeeService = require('../services/EmployeeService');
 const UserModel = require('../models/UserModel');
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_ACCESS_SECRET;
+const { logger } = require('../logger');
 
+const JWT_SECRET = process.env.JWT_ACCESS_SECRET;
 
 // Middleware tự decode token trong controller
 const getUserFromToken = (req) => {
@@ -11,9 +12,10 @@ const getUserFromToken = (req) => {
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     return decoded;
   } catch (err) {
+    logger.warn('JWT decode failed: ' + err.message);
     return null;
   }
 };
@@ -26,54 +28,57 @@ const createEmployee = async (req, res) => {
       gender, dateOfBirth, dateOfjoining, username, role
     } = req.body;
 
-    // Kiểm tra người gửi request
     const currentUser = getUserFromToken(req);
-
     if (!currentUser) {
+      logger.warn('Unauthorized attempt to create employee');
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    let userRole = currentUser.role;
+    logger.info(`${currentUser.username} is attempting to create employee ${employeeId}`);
 
-    // Nếu không phải admin → kiểm tra xem có phải trưởng phòng không
+    let userRole = currentUser.role;
     if (userRole !== 'admin') {
       const currentEmployee = await EmployeeModel.findOne({ userId: currentUser.id });
       if (!currentEmployee || currentEmployee.role !== 'Trưởng phòng') {
+        logger.warn(`Permission denied: ${currentUser.username} is not authorized to create employee`);
         return res.status(403).json({ message: 'Chỉ trưởng phòng hoặc admin mới được tạo nhân viên' });
       }
     }
 
-    // Kiểm tra các trường bắt buộc
     if (
       !employeeId || !fullName || !email || !phone || !position ||
-      !department || !salary || !gender || !dateOfBirth || !dateOfjoining || !req.file || !role
+      !department || !salary || !gender || !dateOfBirth || !dateOfjoining || !role
     ) {
+      logger.warn('Missing required fields when creating employee');
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Kiểm tra role hợp lệ
     const allowedRoles = ['Trưởng phòng', 'Phó phòng', 'Trưởng bộ phận', 'Tổ trưởng', 'Nhân viên'];
     if (!allowedRoles.includes(role.trim())) {
+      logger.warn('Invalid role provided: ' + role);
       return res.status(400).json({ message: 'Invalid role' });
     }
 
-    // Kiểm tra trùng employeeId
     const existEmployee = await EmployeeModel.findOne({ employeeId });
     if (existEmployee) {
+      logger.warn(`Duplicate employeeId: ${employeeId}`);
       return res.status(409).json({ message: 'Employee ID already exists' });
     }
 
-    // Gán userId nếu có username
     let userIdToAssign = null;
     if (username) {
       const user = await UserModel.findOne({ username });
       if (!user) {
+        logger.warn(`Username not found: ${username}`);
         return res.status(404).json({ message: 'User not found with provided username' });
       }
       userIdToAssign = user._id;
     }
 
-    const avatarPath = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    let avatarPath = null;
+    if (req.file && req.file.filename) {
+      avatarPath = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    }
 
     const result = await EmployeeService.createEmployee({
       employeeId, fullName, email, phone,
@@ -84,8 +89,10 @@ const createEmployee = async (req, res) => {
       role
     });
 
+    logger.info(`Employee ${employeeId} created by ${currentUser.username}`);
     return res.status(201).json(result);
   } catch (e) {
+    logger.error('Error creating employee: ' + e.message);
     return res.status(500).json({
       message: 'Error creating employee',
       error: e.message
@@ -93,61 +100,57 @@ const createEmployee = async (req, res) => {
   }
 };
 
-
 const updateEmployee = async (req, res) => {
   try {
     const id = req.params.id;
     const data = req.body;
 
-    //  Lấy user từ token
     const currentUser = getUserFromToken(req);
     if (!currentUser) {
+      logger.warn('Unauthorized attempt to update employee');
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    //  Chỉ admin hoặc trưởng phòng mới được update
     if (currentUser.role !== 'admin') {
       const currentEmployee = await EmployeeModel.findOne({ userId: currentUser.id });
       if (!currentEmployee || currentEmployee.role !== 'Trưởng phòng') {
+        logger.warn(`${currentUser.username} tried to update employee without permission`);
         return res.status(403).json({ message: 'Bạn không có quyền cập nhật nhân viên' });
       }
     }
 
-    //  Kiểm tra employee tồn tại
     const employee = await EmployeeModel.findById(id);
     if (!employee) {
+      logger.warn(`Employee not found for update: ${id}`);
       return res.status(404).json({ message: 'Employee not found' });
     }
 
-    //  Nếu có avatar mới
     if (req.file) {
       data.avatar = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
     }
 
-    //  Nếu có cập nhật role
     if (data.role) {
       const allowedRoles = ['Trưởng phòng', 'Phó phòng', 'Trưởng bộ phận', 'Tổ trưởng', 'Nhân viên'];
       if (!allowedRoles.includes(data.role.trim())) {
+        logger.warn('Invalid role provided on update: ' + data.role);
         return res.status(400).json({ message: 'Invalid role' });
       }
     }
 
-    // Gán userId nếu có truyền username
-    let userIdToAssign = employee.userId; // giữ nguyên nếu không đổi
     if (data.username) {
       const user = await UserModel.findOne({ username: data.username });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found with provided username' });
-    }
-    data.userId = user._id;
+      if (!user) {
+        logger.warn(`Username not found during update: ${data.username}`);
+        return res.status(404).json({ message: 'User not found with provided username' });
+      }
+      data.userId = user._id;
     }
 
-
-    //  Cập nhật
     const result = await EmployeeService.updateEmployee(id, data);
+    logger.info(`${currentUser.username} updated employee ${id}`);
     return res.status(200).json(result);
-
   } catch (e) {
+    logger.error('Error updating employee: ' + e.message);
     return res.status(500).json({
       message: 'Error updating employee',
       error: e.message
@@ -155,18 +158,20 @@ const updateEmployee = async (req, res) => {
   }
 };
 
-
 const deleteEmployee = async (req, res) => {
   try {
     const id = req.params.id;
     const employee = await EmployeeModel.findById(id);
     if (!employee) {
+      logger.warn(`Attempt to delete nonexistent employee: ${id}`);
       return res.status(404).json({ message: 'Employee not found' });
     }
 
     const result = await EmployeeService.deleteEmployee(id);
+    logger.info(`Employee deleted: ${id}`);
     return res.status(200).json(result);
   } catch (e) {
+    logger.error('Error deleting employee: ' + e.message);
     return res.status(500).json({
       message: 'Error deleting employee',
       error: e.message
@@ -180,10 +185,14 @@ const getAllEmployee = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
 
     const user = getUserFromToken(req);
-    if (!user) return res.status(401).json({ message: 'Unauthorized' });
+    if (!user) {
+      logger.warn('Unauthorized attempt to get employee list');
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
 
     const currentEmployee = await EmployeeModel.findOne({ userId: user.id });
     if (!currentEmployee && user.role !== 'admin') {
+      logger.warn('Employee not found for user: ' + user.username);
       return res.status(404).json({ message: 'Current employee not found' });
     }
 
@@ -192,43 +201,30 @@ const getAllEmployee = async (req, res) => {
     const currentIndex = currentEmployee ? hierarchy.indexOf(currentEmployee.role) : -1;
 
     const filtered = allEmployees.filter((emp) => {
-      // Admin thấy tất cả
       if (user.role === 'admin') return true;
-
-      // Khác phòng ban → không thấy
       if (emp.department !== currentEmployee.department) return false;
-
       const empIndex = hierarchy.indexOf(emp.role);
-
-      // Cho xem chính mình
       if (emp._id.toString() === currentEmployee._id.toString()) return true;
-
-      // Cho xem người cùng cấp hoặc thấp hơn
       return empIndex >= currentIndex;
     });
 
-    // Phân trang
     const start = (page - 1) * limit;
     const paged = filtered.slice(start, start + limit);
 
+    logger.info(`${user.username} retrieved employee list`);
     return res.status(200).json({
       status: 'success',
       total: filtered.length,
       data: paged,
     });
   } catch (e) {
+    logger.error('Error getting employee list: ' + e.message);
     return res.status(500).json({
       message: 'Error getting employee list',
       error: e.message,
     });
   }
 };
-
-module.exports = {
-  getAllEmployee
-};
-
-
 
 const getEmployeeDetail = async (req, res) => {
   try {
@@ -240,40 +236,36 @@ const getEmployeeDetail = async (req, res) => {
     const target = await EmployeeModel.findById(targetId);
     if (!target) return res.status(404).json({ message: 'Employee not found' });
 
-    //  Nếu là admin → xem full
     if (user.role === 'admin') {
+      logger.info(`${user.username} viewed employee ${targetId} (admin)`);
       return res.status(200).json({ data: target });
     }
 
-    //  Nếu xem chính mình → cho xem full
     if (viewer && viewer._id.toString() === target._id.toString()) {
+      logger.info(`${user.username} viewed own profile`);
       return res.status(200).json({ data: target });
     }
 
-    //  Cấm xem khác phòng ban
     if (!viewer || viewer.department !== target.department) {
+      logger.warn(`${user.username} tried to view employee from different department`);
       return res.status(403).json({ message: 'Bạn không có quyền xem nhân viên phòng ban khác' });
     }
 
-    //  Phân quyền theo cấp bậc
     const hierarchy = ['Trưởng phòng', 'Phó phòng', 'Trưởng bộ phận', 'Tổ trưởng', 'Nhân viên'];
     const viewerIndex = hierarchy.indexOf(viewer.role);
     const targetIndex = hierarchy.indexOf(target.role);
 
-    // Nếu cấp dưới → được xem (ẩn lương nếu không phải admin/trưởng phòng)
     if (targetIndex >= viewerIndex) {
-      if (viewer.role === 'Trưởng phòng') {
-        return res.status(200).json({ data: target });
-      } else {
-        const { salary, ...safeData } = target.toObject();
-        return res.status(200).json({ data: safeData });
-      }
+      logger.info(`${user.username} viewed employee ${targetId}`);
+      if (viewer.role === 'Trưởng phòng') return res.status(200).json({ data: target });
+      const { salary, ...safeData } = target.toObject();
+      return res.status(200).json({ data: safeData });
     }
 
-    //  Không xem được người cùng cấp hoặc cao hơn
+    logger.warn(`${user.username} tried to view higher level employee`);
     return res.status(403).json({ message: 'Bạn không có quyền xem thông tin này' });
-
   } catch (e) {
+    logger.error('Error getting employee detail: ' + e.message);
     return res.status(500).json({
       message: 'Error getting employee detail',
       error: e.message,
@@ -285,8 +277,10 @@ const searchEmployees = async (req, res) => {
   try {
     const { keyword, department } = req.query;
     const result = await EmployeeService.searchEmployees(keyword, department);
+    logger.info(`Search employees by keyword=${keyword} department=${department}`);
     return res.status(200).json(result);
   } catch (e) {
+    logger.error('Error searching employees: ' + e.message);
     return res.status(500).json({
       message: 'Error searching employees',
       error: e.message
@@ -297,8 +291,10 @@ const searchEmployees = async (req, res) => {
 const getStatistics = async (req, res) => {
   try {
     const result = await EmployeeService.getStatistics();
+    logger.info('Statistics retrieved');
     return res.status(200).json(result);
   } catch (e) {
+    logger.error('Error getting statistics: ' + e.message);
     return res.status(500).json({
       message: 'Error getting statistics',
       error: e.message
@@ -312,6 +308,7 @@ const getEmployeeByUserId = async (req, res) => {
     const targetUserId = req.params.userId;
 
     if (user.role !== 'admin' && user.id !== targetUserId) {
+      logger.warn(`${user.username} tried to view another user's employee info`);
       return res.status(403).json({
         message: 'Access denied: You can only view your own info',
       });
@@ -319,11 +316,14 @@ const getEmployeeByUserId = async (req, res) => {
 
     const result = await EmployeeService.getEmployeeByUserId(targetUserId);
     if (result.status === 'ERR') {
+      logger.warn(`Employee not found for userId: ${targetUserId}`);
       return res.status(404).json({ message: result.message });
     }
 
+    logger.info(`${user.username} retrieved employee info by userId`);
     return res.status(200).json(result);
   } catch (e) {
+    logger.error('Error getting employee by userId: ' + e.message);
     return res.status(500).json({
       message: 'Error getting employee by userId',
       error: e.message,
